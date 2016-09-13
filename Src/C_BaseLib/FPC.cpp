@@ -23,26 +23,11 @@ const
 IntDescriptor&
 FPC::NativeLongDescriptor ()
 {
-#if defined(__i486__) || \
-    defined(WIN32) || \
-    defined(i386) || \
-    defined(__i386__) || \
-    defined(__x86_64) || \
-    defined(__amd64__) || \
-    defined(powerpc)
+#if defined(_LITTLE_ENDIAN)
     static const IntDescriptor nld(sizeof(long), IntDescriptor::ReverseOrder);
-#endif
-
-#if defined(__sgi) || \
-    defined(__sun) || \
-    defined(_AIX)  || \
-    defined(__ppc__) || \
-    defined(__ppc64__) || \
-    defined(_SX)   || \
-    defined(__hpux)
+#else
     static const IntDescriptor  nld(sizeof(long), IntDescriptor::NormalOrder);
 #endif
-
     return nld;
 }
 
@@ -50,34 +35,23 @@ const
 RealDescriptor&
 FPC::NativeRealDescriptor ()
 {
-#if defined(__i486__) || \
-    defined(WIN32) || \
-    defined(i386) || \
-    defined(__i386__) || \
-    defined(__amd64__) || \
-    defined(__x86_64)
+#if defined(_LITTLE_ENDIAN)
+
 #ifdef BL_USE_FLOAT
     static const RealDescriptor nrd(ieee_float, reverse_float_order, 4);
 #else
     static const RealDescriptor nrd(ieee_double, reverse_double_order, 8);
 #endif
-#endif
 
-#if defined(__sgi) || \
-    defined(__sun) || \
-    defined(_AIX)  || \
-    defined(__ppc__) || \
-    defined(__ppc64__) || \
-    defined(_SX)   || \
-    defined(powerpc) || \
-    defined(__hpux)
+#else
+
 #ifdef BL_USE_FLOAT
     static const RealDescriptor nrd(ieee_float, normal_float_order, 4);
 #else
     static const RealDescriptor nrd(ieee_double, normal_double_order, 8);
 #endif
-#endif
 
+#endif
     return nrd;
 }
 
@@ -85,26 +59,11 @@ const
 RealDescriptor&
 FPC::Native32RealDescriptor ()
 {
-#if defined(__i486__) || \
-    defined(WIN32) || \
-    defined(i386) || \
-    defined(__i386__) || \
-    defined(__amd64__) || \
-    defined(__x86_64)
+#if defined(_LITTLE_ENDIAN)
     static const RealDescriptor n32rd(ieee_float, reverse_float_order, 4);
-#endif
-
-#if defined(__sgi) || \
-    defined(__sun) || \
-    defined(_AIX)  || \
-    defined(__ppc__) || \
-    defined(__ppc64__) || \
-    defined(_SX)   || \
-    defined(powerpc) || \
-    defined(__hpux)
+#else
     static const RealDescriptor n32rd(ieee_float, normal_float_order, 4);
 #endif
-
     return n32rd;
 }
 
@@ -123,22 +82,4 @@ FPC::Ieee64NormalRealDescriptor ()
     static const RealDescriptor i64rd(ieee_double, normal_double_order, 8);
     return i64rd;
 }
-
-
-#if !(defined(_SX)      || \
-      defined(__sgi)    || \
-      defined(__sun)    || \
-      defined(__i486__) || \
-      defined(i386)     || \
-      defined(__ppc__) || \
-      defined(__ppc64__) || \
-      defined(__i386__) || \
-      defined(__amd64__) || \
-      defined(__x86_64) || \
-      defined(__hpux)   || \
-      defined(powerpc)  || \
-      defined(_MSC_VER) || \
-      defined(_AIX))
-#error We do not yet support FAB I/O on this machine
-#endif
 

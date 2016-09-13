@@ -73,19 +73,6 @@ mpi_libraries =
 mpi_include_dir =
 mpi_lib_dir =
 
-# test for endianness to distinguish older IBM Mac's from newer Intel ones
-endian := $(shell perl -MConfig -e '$$i=index $$Config{byteorder},1;if ($$i == 0){print "little"};')
-
-ifeq ($(ARCH),Darwin)
-  ifeq ($(findstring little,$(endian)),little)
-    CPPFLAGS += -DBL_$(ARCH)_little
-  else
-    CPPFLAGS += -DBL_$(ARCH)
-  endif
-else
-  CPPFLAGS += -DBL_$(ARCH)
-endif
-
 CPPFLAGS += -DFORTRAN_BOXLIB
 
 ifdef TEST
@@ -108,10 +95,6 @@ mdir = $(tdir)/m
 hdir = t/html
 
 
-ifeq ($(COMP),g95)
-  include $(BOXLIB_HOME)/Tools/F_mk/comps/g95.mak
-endif
-
 ifeq ($(findstring gfortran, $(COMP)), gfortran)
   include $(BOXLIB_HOME)/Tools/F_mk/comps/gfortran.mak
 endif
@@ -120,70 +103,8 @@ ifeq ($(COMP),xlf)
   include $(BOXLIB_HOME)/Tools/F_mk/comps/xlf.mak
 endif
 
-ifeq ($(ARCH),Darwin)
-  ifeq ($(COMP),IBM)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Darwin_ibm.mak
-  endif
-
-  ifeq ($(COMP),Intel)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Darwin_intel.mak
-  endif
-endif
-
-ifeq ($(ARCH),FreeBSD)
-endif
-
-ifeq ($(ARCH),Linux)
-  ifeq ($(COMP),Cray)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_cray.mak
-  endif
-
-  ifeq ($(COMP),PGI)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_pgi.mak
-  endif
-
-  ifeq ($(COMP),SunStudio)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_sunstudio.mak
-  endif
-
-  ifeq ($(COMP),PathScale)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_pathscale.mak
-  endif
-
-  ifeq ($(COMP),Intel)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_intel.mak
-  endif
-
-  # Gottingen machines
-  ifeq ($(HOST),hicegate0)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_intel.mak
-  endif
-
-  ifeq ($(COMP),NAG)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_nag.mak
-  endif
-
-  ifeq ($(COMP),Lahey)
-    include $(BOXLIB_HOME)/Tools/F_mk/comps/Linux_lahey.mak
-  endif
-endif
-
-ifeq ($(ARCH),AIX)
-  include $(BOXLIB_HOME)/Tools/F_mk/comps/aix.mak
-endif
-
-ifeq ($(findstring mira, $(HOSTNAMEF)), mira)
-  include $(BOXLIB_HOME)/Tools/F_mk/comps/bgq.mak
-endif
-
 ifeq ($(strip $(F90)),)
    $(error "COMP=$(COMP) is not supported")   
-endif
-
-ifdef ROSE
-ifeq ($(strip $(ROSECOMP)),)
-   $(error "ROSECOMP is not defined")   
-endif
 endif
 
 ifdef MPI

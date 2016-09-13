@@ -123,7 +123,7 @@ c-----------------------------------------------------------------------
       end
 c-----------------------------------------------------------------------
 c
-c     Fill in a matrix x vector operator here
+c     Fill in a matrix x  operator here
 c
       subroutine FORT_ADOTX(
      $     y, DIMS(y),

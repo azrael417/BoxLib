@@ -14,13 +14,13 @@ BOXLIB_HOME = ../..
 
 DEBUG	     = FALSE
 USE_MPI      = TRUE
-USE_OMP      = FALSE
+USE_OMP      = TRUE
 USE_IPM      = FALSE
 PROFILE      = FALSE
 COMM_PROFILE = FALSE
 USE_DUMPI    = FALSE
-COMP         = gcc
-FCOMP        = gfortran
+COMP         = xlC
+FCOMP        = xlf
 #COMP         = Intel
 #FCOMP        = Intel
 DIM	     = 3
