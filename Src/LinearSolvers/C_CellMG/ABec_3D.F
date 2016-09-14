@@ -116,6 +116,7 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
 !$omp target data map(phi) map(to:rhs,m0,m1,m2,m3,m4,m5, a, bX,bY,bZ, f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi) if(.TRUE.)
       do n = 1, nc
 !$omp target if(.TRUE.)
+c     k and j are included as private because they are not private by default due to compiler bug.
 !$omp teams distribute collapse(2) private(ioff,k,j) num_teams(64) thread_limit(64)
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -356,7 +357,11 @@ c
       dhy = beta/h(2)**2
       dhz = beta/h(3)**2
 
+
+!$omp target data map(from: y) map(to: a, bX,bY,bZ, x, lo, hi) if(.TRUE.)
       do n = 1, nc
+!$omp target if(.TRUE.)
+!$omp teams distribute parallel do collapse(3) private(k,j,i) 
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                do i = lo(1), hi(1)
@@ -373,7 +378,10 @@ c
                end do
             end do
          end do
+!$omp end teams distribute parallel do
+!$omp end target
       end do
+!$omp end target data
 
       end
 
