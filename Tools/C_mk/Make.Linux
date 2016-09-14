@@ -17,7 +17,7 @@ FORT_CPP := cpp -E -traditional-cpp -P
 ifeq ($(FCOMP),xlf)
   CXX := mpicxx
   CC  := mpicc
-  FC  := mpif90 -qfixed
+  FC  := mpif90 -qfixed=132 -Xptxas -v
   fC  := mpif90 -qfixed
   F90 := mpif90 
 
@@ -27,6 +27,15 @@ ifeq ($(FCOMP),xlf)
     CFLAGS   += -qsmp=noauto:omp
     CXXOPTF  += -qsmp=noauto:omp
   endif
+
+  
+  ifeq ($(USE_OMP_OFFLOAD),TRUE)
+    F90FLAGS += -qsmp=noauto:omp -qoffload
+    FFLAGS   += -qsmp=noauto:omp -qoffload
+    CFLAGS   += -qsmp=noauto:omp -qoffload
+    CXXOPTF  += -qsmp=noauto:omp -qoffload
+  endif
+
 
   F90FLAGS += -qsuffix=f=f90 -qfree=f90 -qmoddir=$(fmoddir) -I$(fmoddir)
 

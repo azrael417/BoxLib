@@ -113,10 +113,15 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
       dhy = beta/h(2)**2
       dhz = beta/h(3)**2
 
+!$omp target data map(phi) map(to:rhs,m0,m1,m2,m3,m4,m5, a, bX,bY,bZ, f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi)
       do n = 1, nc
-          do k = lo(3), hi(3)
+!$omp target num_teams(1) num_threads(1)
+!$omp teams distribute private(ioff)
+         do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                ioff = MOD(lo(1) + j + k + redblack,2)
+!$omp parallel do private(cf0,cf1,cf2,cf3,cf4,cf5, rho, gamma, g_m_d,res) 
+!$omp&          firstprivate(alpha,dhx,dhy,dhz,omega, ioff) default(shared)
                do i = lo(1) + ioff,hi(1),2
 
                   cf0 = merge(f0(blo(1),j,k), 0.0D0,
@@ -151,13 +156,16 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
 
                   res =  rhs(i,j,k,n) - (gamma*phi(i,j,k,n) - rho)
                   phi(i,j,k,n) = phi(i,j,k,n) + omega/g_m_d * res
-
                end do
+!$omp end parallel do
             end do
-          end do
+         end do
+!$omp end teams distribute
+!$omp end target 
       end do
-
+!$omp end target data
       end
+
 c-----------------------------------------------------------------------
 c      
 c     Jacobi:

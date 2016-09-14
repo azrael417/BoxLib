@@ -426,9 +426,9 @@ ABecLaplacian::Fsmooth (MultiFab&       solnL,
     const bool tiling = true;
 
 #ifdef _OPENMP
-#pragma omp parallel
+    //#pragma omp parallel
 #endif
-    for (MFIter solnLmfi(solnL,tiling); solnLmfi.isValid(); ++solnLmfi)
+    for (MFIter solnLmfi(solnL); solnLmfi.isValid(); ++solnLmfi)
     {
 	OrientationIter oitr;
 
