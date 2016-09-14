@@ -359,9 +359,9 @@ c
 
 
 !$omp target data map(from: y) map(to: a, bX,bY,bZ, x, lo, hi) if(.TRUE.)
-      do n = 1, nc
 !$omp target if(.TRUE.)
-!$omp teams distribute parallel do collapse(3) private(k,j,i) 
+!$omp teams distribute parallel do collapse(4) private(k,j,i)
+      do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                do i = lo(1), hi(1)
@@ -378,9 +378,9 @@ c
                end do
             end do
          end do
+      end do
 !$omp end teams distribute parallel do
 !$omp end target
-      end do
 !$omp end target data
 
       end
@@ -421,7 +421,10 @@ c
 
       res = 0.0D0
 
+!$omp target data map(to: a, bX,bY,bZ, lo, hi) if(.TRUE.)
       do n = 1, nc
+!$omp target map(tofrom:res) if(.TRUE.)
+!$omp teams distribute parallel do collapse(3) firstprivate(alpha,dhx,dhy,dhz) private(k,j,i) reduction(+:res)
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                do i = lo(1), hi(1)
@@ -435,7 +438,10 @@ c
                end do
             end do
          end do
+!$omp end teams distribute parallel do
+!$omp end target
       end do
+!$omp end target data   
 
       end
 c-----------------------------------------------------------------------

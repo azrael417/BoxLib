@@ -30,10 +30,10 @@ ifeq ($(FCOMP),xlf)
 
   
   ifeq ($(USE_OMP_OFFLOAD),TRUE)
-    F90FLAGS += -qsmp=noauto:omp -qoffload
-    FFLAGS   += -qsmp=noauto:omp -qoffload
-    CFLAGS   += -qsmp=noauto:omp -qoffload
-    CXXOPTF  += -qsmp=noauto:omp -qoffload
+    F90FLAGS += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
+    FFLAGS   += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
+    CFLAGS   += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
+    CXXOPTF  += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
   endif
 
 

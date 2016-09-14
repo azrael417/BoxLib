@@ -45,25 +45,22 @@ c-----------------------------------------------------------------------
 
       integer i,j,k,n
 
+!$omp target data map(tofrom:phi,rr) map(to: pp, ww, lo, hi) if(.TRUE.)
+!$omp target if(.TRUE.)
+!$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(a) 
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                do i = lo(1), hi(1)
                   phi(i,j,k,n) = phi(i,j,k,n) + a * pp(i,j,k,n)
-               end do
-            end do
-         end do
-      end do
-
-      do n = 1, nc
-         do k = lo(3), hi(3)
-            do j = lo(2), hi(2)
-               do i = lo(1), hi(1)
                   rr(i,j,k,n)  = rr(i,j,k,n)  - a * ww(i,j,k,n)
                end do
             end do
          end do
       end do
+!$omp end teams distribute parallel do
+!$omp end target
+!$omp end target data  
 
       end
 c-----------------------------------------------------------------------
@@ -96,6 +93,9 @@ c-----------------------------------------------------------------------
 
       integer i,j,k,n
 
+!$omp target data map(tofrom:pp) map(to: rr, lo, hi) if(.TRUE.)
+!$omp target if(.TRUE.)
+!$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(b)
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -105,7 +105,10 @@ c-----------------------------------------------------------------------
             end do
          end do
       end do
-
+!$omp end teams distribute parallel do
+!$omp end target
+!$omp end target data  
+      
       end
       
 c-----------------------------------------------------------------------
@@ -139,6 +142,10 @@ c-----------------------------------------------------------------------
 
       pw = 0.0D0
 
+      !be careful with numbers of RHS!!!!
+!$omp target data map(to: pp, ww, lo, hi) if(.TRUE.)
+!$omp target map(tofrom: pw) if(.TRUE.)
+!$omp teams distribute parallel do collapse(4) private(k,j,i,n) reduction(+:pw)
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -148,7 +155,10 @@ c-----------------------------------------------------------------------
             end do
          end do
       end do
-
+!$omp end teams distribute parallel do
+!$omp end target
+!$omp end target data  
+      
       end
 c-----------------------------------------------------------------------
       subroutine FORT_CGSXAY(
@@ -172,6 +182,9 @@ c-----------------------------------------------------------------------
 
       integer i, j, k, n
 
+!$omp target data map(from: ss) map(to: xx, yy, lo, hi) if(.TRUE.)
+!$omp target if(.TRUE.)
+!$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(a)
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -181,5 +194,8 @@ c-----------------------------------------------------------------------
             end do
          end do
       end do
+!$omp end teams distribute parallel do
+!$omp end target
+!$omp end target data  
 
       end
