@@ -23,15 +23,18 @@
       REAL_T c(DIMV(c),nc)
 
       integer i, i2, i2p1, j, j2, j2p1, k, k2, k2p1, n
-
+!$omp target data map(from: c) map(to: f, hi, lo)
+!$omp target if(.TRUE.)
+!$omp teams distribute parallel do collapse(4) 
+!$omp& private(n,k,j,i, k2,j2,i2, k2p1, j2p1,i2p1)
       do n = 1, nc
          do k = lo(3), hi(3)
-            k2 = 2*k
-            k2p1 = k2 + 1
 	    do j = lo(2), hi(2)
-               j2 = 2*j
-               j2p1 = j2 + 1
                do i = lo(1), hi(1)
+                  k2 = 2*k
+                  k2p1 = k2 + 1
+                  j2 = 2*j
+                  j2p1 = j2 + 1
                   i2 = 2*i
                   i2p1 = i2 + 1
                   c(i,j,k,n) =  (
@@ -44,7 +47,9 @@
             end do
          end do
       end do
-
+!$omp end teams distribute parallel do
+!$omp end target
+!$omp end target data
       end
 !
 ! This can't be OpenMP'd.
