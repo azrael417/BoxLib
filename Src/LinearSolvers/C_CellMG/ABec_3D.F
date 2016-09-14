@@ -113,10 +113,10 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
       dhy = beta/h(2)**2
       dhz = beta/h(3)**2
 
-!$omp target data map(phi) map(to:rhs,m0,m1,m2,m3,m4,m5, a, bX,bY,bZ, f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi)
+!$omp target data map(phi) map(to:rhs,m0,m1,m2,m3,m4,m5, a, bX,bY,bZ, f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi) if(.TRUE.)
       do n = 1, nc
-!$omp target num_teams(1) num_threads(1)
-!$omp teams distribute private(ioff)
+!$omp target if(.TRUE.)
+!$omp teams distribute collapse(2) private(ioff,k,j) num_teams(64) thread_limit(64)
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                ioff = MOD(lo(1) + j + k + redblack,2)

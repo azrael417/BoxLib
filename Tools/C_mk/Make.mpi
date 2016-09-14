@@ -8,5 +8,5 @@ endif
 CXXOPTF += -DOMPI_SKIP_MPICXX
 CXXDEBF += -DOMPI_SKIP_MPICXX
 
-BL_MPI_LIBS += -lmpi_mpifh -L/gpfs/gpfs_gl4_16mb/xl-compilers/xlf/160908/opt/ibm/xlf/15.1.5/lib  -lxlf90_r -lxlfmath -lxlopt -lxl
+BL_MPI_LIBS += -lmpi_mpifh -L/gpfs/ess2fs0/walkup/ibmcmp/xlf/latest/opt/ibm/xlf/15.1.5/lib -L/gpfs/gpfs_gl4_16mb/xl-compilers/xlf/160908/opt/ibm/xlf/15.1.5/lib  -lxlf90_r -lxlfmath -lxlopt -lxl
 
