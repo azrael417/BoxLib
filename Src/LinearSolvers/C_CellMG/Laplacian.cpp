@@ -228,21 +228,13 @@ Laplacian::Fapply (MultiFab&       y,
         FArrayBox&       yfab = y[ymfi];
         const FArrayBox& xfab = x[ymfi];
 
-#ifdef FKERNELS
+
         FORT_ADOTX(yfab.dataPtr(dst_comp), 
                    ARLIM(yfab.loVect()), ARLIM(yfab.hiVect()),
                    xfab.dataPtr(src_comp), 
                    ARLIM(xfab.loVect()), ARLIM(xfab.hiVect()),
                    tbx.loVect(), tbx.hiVect(), &num_comp,
                    h[level]);
-#else
-#pragma omp target data map(from: y) map(to: a, bX,bY,bZ, x, lo, hi) if(.TRUE.)
-	  do n = 1, num_comp
-#pragma omp target if(true)
-#pragma omp teams distribute parallel do collapse(3) private(k,j,i)
-	       do k = lo(3), hi(3)
-		    do j = lo(2), hi(2)
-			 do i = lo(1), hi(1)
-#endif
+
     }
 }
