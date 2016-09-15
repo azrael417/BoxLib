@@ -51,6 +51,24 @@
 !$omp end target
 !$omp end target data
       end
+
+      subroutine FORT_MAPFROMGPU (
+     $     phi, DIMS(phi),
+     $     lo, hi, nc)
+      implicit none
+      integer nc
+      integer DIMDEC(phi)
+      integer lo(BL_SPACEDIM)
+      integer hi(BL_SPACEDIM)
+      REAL_T phi(DIMV(phi),nc)
+
+!$omp target update from(phi)
+
+      end
+
+
+
+      
 !
 ! This can't be OpenMP'd.
 ! Instead we thread over FABs in MultiGrid::interpolate()

@@ -113,7 +113,9 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
       dhy = beta/h(2)**2
       dhz = beta/h(3)**2
 
-!$omp target data map(phi) map(to:rhs,m0,m1,m2,m3,m4,m5, a, bX,bY,bZ, f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi) if(.TRUE.)
+!$omp target enter data map(to: phi) map(to:rhs,m0,m1,m2,m3,m4,m5, a, bX,bY,bZ, f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi) 
+
+      
       do n = 1, nc
 !$omp target if(.TRUE.)
 c     k and j are included as private because they are not private by default due to compiler bug.
@@ -164,7 +166,7 @@ c     k and j are included as private because they are not private by default du
 !$omp end teams distribute
 !$omp end target 
       end do
-!$omp end target data
+
       end
 
 c-----------------------------------------------------------------------
@@ -358,7 +360,9 @@ c
       dhz = beta/h(3)**2
 
 
-!$omp target data map(from: y) map(to: a, bX,bY,bZ, x, lo, hi) if(.TRUE.)
+!$omp target enter data map(to: a, bX,bY,bZ, x, lo, hi)
+!$omp target enter data map(alloc:y)
+      
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i)
       do n = 1, nc
@@ -381,7 +385,6 @@ c
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data
 
       end
 
@@ -421,9 +424,9 @@ c
 
       res = 0.0D0
 
-!$omp target data map(to: a, bX,bY,bZ, lo, hi) if(.TRUE.)
+!$omp target enter data map(to: a, bX,bY,bZ, lo, hi) if(.TRUE.)
       do n = 1, nc
-!$omp target map(tofrom:res) if(.TRUE.)
+!$omp target map(tofrom:res)
 !$omp teams distribute parallel do collapse(3) firstprivate(alpha,dhx,dhy,dhz) private(k,j,i) reduction(+:res)
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -441,7 +444,6 @@ c
 !$omp end teams distribute parallel do
 !$omp end target
       end do
-!$omp end target data   
 
       end
 c-----------------------------------------------------------------------

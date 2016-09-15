@@ -17,6 +17,7 @@
 
 #if (BL_SPACEDIM == 3) 
 #define FORT_AVERAGE   average3dgen
+#define FORT_MAPFROMGPU   mapfromgpu3dgen
 #define FORT_INTERP    interp3dgen
 #endif
 
@@ -56,12 +57,15 @@
 
 #if    defined(BL_FORT_USE_UPPERCASE)
 #define FORT_AVERAGE   AVERAGE3DGEN
+#define FORT_MAPFROMGPU   MAPFROMGPU3DGEN
 #define FORT_INTERP    INTERP3DGEN
 #elif  defined(BL_FORT_USE_LOWERCASE)
 #define FORT_AVERAGE   average3dgen
+#define FORT_MAPFROMGPU   mapfromgpu3dgen
 #define FORT_INTERP    interp3dgen
 #elif  defined(BL_FORT_USE_UNDERSCORE)
 #define FORT_AVERAGE   average3dgen_
+#define FORT_MAPFROMGPU   mapfromgpu3dgen_
 #define FORT_INTERP    interp3dgen_
 #endif
 
@@ -77,6 +81,12 @@ extern "C"
         const int *tlo, const int *thi,
         const int *nc);
 
+    void FORT_MAPFROMGPU (
+        Real* phi,       ARLIM_P(phi_lo), ARLIM_P(phi_hi),
+	const int *tlo, const int *thi,
+        const int *nc);
+
+  
     void FORT_INTERP (
         Real* fine,       ARLIM_P(fine_lo), ARLIM_P(fine_hi),
         const Real* crse, ARLIM_P(crse_lo), ARLIM_P(crse_hi),

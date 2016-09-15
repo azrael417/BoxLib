@@ -298,7 +298,8 @@ MultiGrid::solve (MultiFab&       _sol,
     // We can now use homogeneous bc's because we have put the problem into residual-correction form.
     //
     if ( !solve_(_sol, _eps_rel, _eps_abs, LinOp::Homogeneous_BC, tmp[0], tmp[1]) )
-        BoxLib::Error("MultiGrid:: failed to converge!");
+      return;
+      BoxLib::Error("MultiGrid:: failed to converge!");
 }
 
 int
@@ -640,6 +641,14 @@ MultiGrid::relax (MultiFab&      solL,
            if ( ParallelDescriptor::IOProcessor(color()) ) 
              std::cout << "    UP:Norm after  smooth " << rnorm << '\n';
         }
+
+
+	if ( level == 0 ) {
+	  mapfromgpu(solL);
+	}
+
+
+	
     }
     else
     {
@@ -784,6 +793,7 @@ MultiGrid::average (MultiFab&       c,
     }
 }
 
+
 void
 MultiGrid::interpolate (MultiFab&       f,
                         const MultiFab& c)
@@ -810,6 +820,26 @@ MultiGrid::interpolate (MultiFab&       f,
                     cfab.dataPtr(),
                     ARLIM(cfab.loVect()), ARLIM(cfab.hiVect()),
                     bx.loVect(), bx.hiVect(), &nc);
+    }
+}
+
+
+
+void
+MultiGrid::mapfromgpu (MultiFab&    phi)
+{
+  // funciton to move phi from gpu within fortran.
+  
+    for (MFIter mfi(phi); mfi.isValid(); ++mfi)
+    {
+        const int           k = mfi.index();
+        const Box&         bx = phi.boxArray()[k];
+        const int          nc = phi.nComp();
+        FArrayBox&       phifab = phi[mfi];
+
+        FORT_MAPFROMGPU(phifab.dataPtr(),
+                    ARLIM(phifab.loVect()), ARLIM(phifab.hiVect()),
+			bx.loVect(), bx.hiVect(), &nc);
     }
 }
 

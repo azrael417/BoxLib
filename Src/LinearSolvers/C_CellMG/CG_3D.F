@@ -45,7 +45,10 @@ c-----------------------------------------------------------------------
 
       integer i,j,k,n
 
-!$omp target data map(tofrom:phi,rr) map(to: pp, ww, lo, hi) if(.TRUE.)
+!!!!!!     $omp target enter data map(tofrom:phi,rr) map(to: pp, ww, lo, hi)
+
+!$omp target enter data map(to:phi,rr) map(to: pp, ww, lo, hi) 
+      
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(a) 
       do n = 1, nc
@@ -60,8 +63,9 @@ c-----------------------------------------------------------------------
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data  
 
+
+      
       end
 c-----------------------------------------------------------------------
 c      
@@ -93,7 +97,10 @@ c-----------------------------------------------------------------------
 
       integer i,j,k,n
 
-!$omp target data map(tofrom:pp) map(to: rr, lo, hi) if(.TRUE.)
+!!!!     $omp target enter data map(tofrom:pp) map(to: rr, lo, hi) if(.TRUE.)
+
+!$omp target enter data map(to:pp) map(to: rr, lo, hi) if(.TRUE.)
+      
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(b)
       do n = 1, nc
@@ -107,7 +114,6 @@ c-----------------------------------------------------------------------
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data  
       
       end
       
@@ -142,8 +148,10 @@ c-----------------------------------------------------------------------
 
       pw = 0.0D0
 
-      !be careful with numbers of RHS!!!!
-!$omp target data map(to: pp, ww, lo, hi) if(.TRUE.)
+!be careful with numbers of RHS!!!!
+      
+!$omp target enter data map(to: pp, ww, lo, hi) if(.TRUE.)
+      
 !$omp target map(tofrom: pw) if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) reduction(+:pw)
       do n = 1, nc
@@ -157,7 +165,6 @@ c-----------------------------------------------------------------------
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data  
       
       end
 c-----------------------------------------------------------------------
@@ -182,7 +189,10 @@ c-----------------------------------------------------------------------
 
       integer i, j, k, n
 
-!$omp target data map(from: ss) map(to: xx, yy, lo, hi) if(.TRUE.)
+!!!!!!$omp target enter data map(from: ss) map(to: xx, yy, lo, hi) if(.TRUE.)
+      
+!$omp target enter data map(alloc: ss) map(to: xx, yy, lo, hi) if(.TRUE.)
+      
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(a)
       do n = 1, nc
@@ -196,6 +206,5 @@ c-----------------------------------------------------------------------
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data  
 
       end

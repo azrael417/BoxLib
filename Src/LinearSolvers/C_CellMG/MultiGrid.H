@@ -240,6 +240,12 @@ protected:
     void average (MultiFab&       c,
                   const MultiFab& f);
     //
+    // Transfer Phi from GPU on fine level
+    //
+    void mapfromgpu (MultiFab&       phi);
+    
+  
+    //
     // Transfer MultiFab from coarse to fine level
     //
     void interpolate (MultiFab&       f,
