@@ -30,10 +30,10 @@ ifeq ($(FCOMP),xlf)
 
   
   ifeq ($(USE_OMP_OFFLOAD),TRUE)
-    F90FLAGS += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
-    FFLAGS   += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
-    CFLAGS   += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
-    CXXOPTF  += -qsmp=noauto:omp -qoffload #-qdebug=wompdistpardo:trompdistpardo:finalc
+    F90FLAGS += -qsmp=noauto:omp -qoffload #-qdebug=ncopy #-qpath=c:/u/b6p168zc/stage1_bmahjour/myPatches #-qdebug=wompdistpardo:trompdistpardo:finalc
+    FFLAGS   += -qsmp=noauto:omp -qoffload #-qdebug=ncopy #-qpath=c:/u/b6p168zc/stage1_bmahjour/myPatches #-qdebug=wompdistpardo:trompdistpardo:finalc
+    CFLAGS   += -qsmp=noauto:omp -qoffload #-qdebug=ncopy #-qpath=c:/u/b6p168zc/stage1_bmahjour/myPatches #-qdebug=wompdistpardo:trompdistpardo:finalc
+    CXXOPTF  += -qsmp=noauto:omp -qoffload #-qdebug=ncopy #-qpath=c:/u/b6p168zc/stage1_bmahjour/myPatches #-qdebug=wompdistpardo:trompdistpardo:finalc
   endif
 
 

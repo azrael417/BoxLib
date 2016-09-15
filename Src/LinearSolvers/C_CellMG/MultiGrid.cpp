@@ -156,7 +156,7 @@ MultiGrid::MultiGrid (LinOp &_lp)
     numlevels    = numLevels();
 
     do_fixed_number_of_iters = 0;
-
+    
     if ( ParallelDescriptor::IOProcessor() && (verbose > 2) )
     {
 	BoxArray tmp = Lp.boxArray();
@@ -237,6 +237,8 @@ MultiGrid::prepareForLevel (int level)
 	res[level] = new MultiFab(Lp.boxArray(level), 1, Lp.NumGrow(), clr);
 	rhs[level] = new MultiFab(Lp.boxArray(level), 1, Lp.NumGrow(), clr);
 	cor[level] = new MultiFab(Lp.boxArray(level), 1, Lp.NumGrow(), clr);
+	
+	/*#pragma omp target enter data map(res[level])*/
 	if ( level == 0 )
 	{
 	    initialsolution = new MultiFab(Lp.boxArray(0), 1, Lp.NumGrow(), clr);
@@ -348,18 +350,49 @@ MultiGrid::solve_ (MultiFab&      _sol,
                 << " < 1e-16 is probably set too low" << '\n';
   }
 
+  //DEBUG
+  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
+    {
+      std::cout << "Inside solve!" << std::endl;
+    }
+  //DEBUG
+
+  
   //
   // We initially define norm_cor based on the initial solution only so we can use it in the very first iteration
   //    to decide whether the problem is already solved (this is relevant if the previous solve used was only solved
   //    according to the Anorm test and not the bnorm test).
   //
   Real       norm_cor    = norm_inf(*initialsolution,true);
+
+  //DEBUG
+  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
+    {
+      std::cout << "After infimum: " << norm_cor << std::endl;
+    }
+  //DEBUG 
+  
   ParallelDescriptor::ReduceRealMax(norm_cor,color());
 
+  //DEBUG
+  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
+    {
+      std::cout << "After infimum reduce: " << norm_cor << std::endl;
+    }
+  //DEBUG 
+  
   int        nit         = 1;
   const Real norm_Lp     = Lp.norm(0, level);
   Real       cg_time     = 0;
 
+  //DEBUG
+  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
+    {
+      std::cout<< "After norm: " << norm_Lp << std::endl;
+    }
+  //DEBUG  
+
+  
   if ( use_Anorm_for_convergence == 1 ) 
   {
      //

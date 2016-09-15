@@ -47,26 +47,39 @@ ABecLaplacian::~ABecLaplacian ()
 Real
 ABecLaplacian::norm (int nm, int level, const bool local)
 {
+    //DEBUG
+    std::cout << "inside norm!" << std::endl;
+    //DEBUG
+    
     BL_PROFILE("ABecLaplacian::norm()");
 
+    
     BL_ASSERT(nm == 0);
     const MultiFab& a   = aCoefficients(level);
 
+    //DEBUG
+    std::cout << "after alloc(?)!" << std::endl;
+    //DEBUG 
+    
     D_TERM(const MultiFab& bX  = bCoefficients(0,level);,
            const MultiFab& bY  = bCoefficients(1,level);,
            const MultiFab& bZ  = bCoefficients(2,level););
 
+    //DEBUG
+    std::cout << "after other allocs(?)!" << std::endl;
+    //DEBUG 
+    
     //const int nc = a.nComp(); // FIXME: This LinOp only really support single-component
     const int nc = 1;
     Real res = 0.0;
 
-    const bool tiling = true;
+    const bool tiling = false;
 
 #ifdef _OPENMP
-#pragma omp parallel reduction(max:res)
+    //    #pragma omp parallel reduction(max:res)
 #endif
     {
-	for (MFIter amfi(a,tiling); amfi.isValid(); ++amfi)
+      for (MFIter amfi(a,tiling); amfi.isValid(); ++amfi)
 	{
 	    Real tres;
 	    
@@ -76,6 +89,11 @@ ABecLaplacian::norm (int nm, int level, const bool local)
 	    D_TERM(const FArrayBox& bxfab = bX[amfi];,
 		   const FArrayBox& byfab = bY[amfi];,
 		   const FArrayBox& bzfab = bZ[amfi];);
+
+	    //DEBUG
+	    std::cout << "before norma!" << std::endl;
+	    std::cout << "pointer " << afab.dataPtr() << std::endl;
+	    //DEBUG 
 	    
 #if (BL_SPACEDIM==2)
 	    FORT_NORMA(&tres,
@@ -86,7 +104,6 @@ ABecLaplacian::norm (int nm, int level, const bool local)
 		       tbx.loVect(), tbx.hiVect(), &nc,
 		       h[level]);
 #elif (BL_SPACEDIM==3)
-	    
 	    FORT_NORMA(&tres,
 		       &alpha, &beta,
 		       afab.dataPtr(),  ARLIM(afab.loVect()), ARLIM(afab.hiVect()),
@@ -96,11 +113,18 @@ ABecLaplacian::norm (int nm, int level, const bool local)
 		       tbx.loVect(), tbx.hiVect(), &nc,
 		       h[level]);
 #endif
+	    //DEBUG
+	    std::cout << "after norma: res= " << tres << std::endl;
+	    //DEBUG
 
 	    res = std::max(res, tres);
 	}
     }
 
+    //DEBUG
+    std::cout << "after norm!" << std::endl;
+    //DEBUG 
+    
     if (!local)
         ParallelDescriptor::ReduceRealMax(res,color());
     return res;
@@ -676,6 +700,7 @@ ABecLaplacian::Fapply (MultiFab&       y,
                    h[level]);
 #endif
 #if (BL_SPACEDIM ==3)
+#ifndef CKERNELS
         FORT_ADOTX(yfab.dataPtr(dst_comp),
                    ARLIM(yfab.loVect()), ARLIM(yfab.hiVect()),
                    xfab.dataPtr(src_comp),
@@ -690,6 +715,82 @@ ABecLaplacian::Fapply (MultiFab&       y,
                    ARLIM(bzfab.loVect()), ARLIM(bzfab.hiVect()),
                    tbx.loVect(), tbx.hiVect(), &num_comp,
                    h[level]);
+#else
+	const int* lo=tbx.loVect();
+	const int* hi=tbx.hiVect();
+	const double* hl=&(h[level][0]);
+	double dhx = beta/(hl[0]*hl[0]);
+	double dhy = beta/(hl[1]*hl[1]);
+	double dhz = beta/(hl[2]*hl[2]);
+	const double* bXarr=bxfab.dataPtr();
+	const double* bYarr=byfab.dataPtr();
+	const double* bZarr=bzfab.dataPtr();
+	const double* aarr=afab.dataPtr(dst_comp);
+	double* yarr=yfab.dataPtr(dst_comp);
+	const double* xarr=xfab.dataPtr(src_comp);
+
+        const Box& fabbox = ymfi.fabbox();
+        const int jStride = fabbox.length(0);
+        const int kStride = fabbox.length(0) * fabbox.length(1);
+        const int aghosts = a.nGrow();
+        const int yghosts = y.nGrow();
+        const int xghosts = x.nGrow();
+        const int bXghosts = bX.nGrow();
+        const int bYghosts = bY.nGrow();
+        const int bZghosts = bZ.nGrow();
+
+        MultiFab x_ng, y_ng;
+
+        if (ParallelDescriptor::IOProcessor())
+          std::cout << "NUM GHOSTS: " << aghosts << " " << xghosts << " " << " " << yghosts << " " << bXghosts << std::endl;
+
+        const IntVect num_cells_IV = fabbox.size();
+        const int* num_cells = num_cells_IV.getVect();
+      
+	
+#pragma omp target data map(from: yarr[:*num_cells]) map(to: aarr[:*num_cells], bXarr[:*num_cells],bYarr[:*num_cells],bZarr[:*num_cells], xarr[:*num_cells], lo[3], hi[3]) if(true)
+//#pragma omp target if(true)
+//#pragma omp teams distribute parallel do collapse(4)
+#pragma omp target teams distribute parallel for collapse(4)
+	for(int n = 0; n < num_comp; n++){
+	  for(int k = lo[2]-yghosts; k<hi[2]+yghosts; k++){
+	    for(int j = lo[1]-yghosts; j<hi[1]+yghosts; j++){
+	      for(int i = lo[0]-yghosts; i<hi[0]+yghosts; i++){
+                int ijk_a = (i+aghosts) + (j+aghosts)*jStride + (k+aghosts)*kStride;
+                int ijk_y = (i+yghosts) + (j+yghosts)*jStride + (k+yghosts)*kStride;
+
+                int ijk_x = (i+xghosts) + (j+xghosts)*jStride + (k+xghosts)*kStride;
+
+                int im1jk_x = (i-1+xghosts) + (j+xghosts)*jStride + (k+xghosts)*kStride;
+                int ip1jk_x = (i+1+xghosts) + (j+xghosts)*jStride + (k+xghosts)*kStride;
+
+                int ijm1k_x = (i+xghosts) + (j-1+xghosts)*jStride + (k+xghosts)*kStride;
+                int ijp1k_x = (i+xghosts) + (j+1+xghosts)*jStride + (k+xghosts)*kStride;
+
+                int ijkm1_x = (i+xghosts) + (j+xghosts)*jStride + (k-1+xghosts)*kStride;
+                int ijkp1_x = (i+xghosts) + (j+xghosts)*jStride + (k+1+xghosts)*kStride;
+
+                int ijk_bX = (i+bXghosts) + (j+bXghosts)*jStride + (k+bXghosts)*kStride;
+                int ip1jk_bX = (i+1+bXghosts) + (j+bXghosts)*jStride + (k+bXghosts)*kStride;
+
+                int ijk_bY = (i+bYghosts) + (j+bYghosts)*jStride + (k+bYghosts)*kStride;
+                int ijp1k_bY = (i+bYghosts) + (j+1+bYghosts)*jStride + (k+bYghosts)*kStride;
+
+                int ijk_bZ = (i+bZghosts) + (j+bZghosts)*jStride + (k+bZghosts)*kStride;
+                int ijkp1_bZ = (i+bZghosts) + (j+bZghosts)*jStride + (k+1+bZghosts)*kStride;
+		
+		yarr[ijk_y]  = alpha*aarr[ijk_a]*xarr[ijk_x]
+		  - dhx*(   bXarr[ip1jk_bX]*( xarr[ip1jk_x] - xarr[ijk_x] )
+			    -   bXarr[ijk_bX]*( xarr[ijk_x] - xarr[im1jk_x] ) )
+		  - dhy*(   bYarr[ijp1k_bY]*( xarr[ijp1k_x] - xarr[ijk_x] )
+			    -   bYarr[ijk_bY]*( xarr[ijk_x] - xarr[ijm1k_x] ) )
+		  - dhz*(   bZarr[ijkp1_bZ]*( xarr[ijkp1_x] - xarr[ijk_x] )
+			    -   bZarr[ijk_bZ]*( xarr[ijk_x] - xarr[ijkm1_x] ) );
+	      }
+	    }
+	  }
+	}
+#endif
 #endif
     }
 }
