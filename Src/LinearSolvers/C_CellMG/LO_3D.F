@@ -28,7 +28,10 @@ c-----------------------------------------------------------------------
       REAL_T res(DIMV(res),nc)
 
       integer i,j,k,n
-
+      
+!$omp target data map(res) map(to: rhs,phi, lo, hi) if(.TRUE.)
+!$omp target update to(rhs,phi) if(.TRUE.)   
+!$omp target teams distribute parallel do collapse(4) private(n,k,j,i)
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -38,6 +41,9 @@ c-----------------------------------------------------------------------
             end do
          end do
       end do
+!$omp end target teams distribute parallel do
+!$omp end target data
+!$omp target update from(res) if(.TRUE.) 
       end
 c-----------------------------------------------------------------------
       subroutine FORT_HARMONIC_AVERAGEEC (

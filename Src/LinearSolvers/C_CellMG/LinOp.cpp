@@ -314,7 +314,7 @@ LinOp::residual (MultiFab&       residL,
     const bool tiling = true;
 
 #ifdef _OPENMP
-#pragma omp parallel
+    //#pragma omp parallel
 #endif
     for (MFIter solnLmfi(solnL,tiling); solnLmfi.isValid(); ++solnLmfi)
     {

@@ -101,9 +101,9 @@ c-----------------------------------------------------------------------
       REAL_T    bZ(DIMV(bZ))
 
 !     testing
-      REAL_T cf0(DIMV(m0));
-      REAL_T cf1(DIMV(m1));
-      REAL_T cf2(DIMV(m2));
+      !REAL_T cf0(DIMV(m0));
+      !REAL_T cf1(DIMV(m1));
+      !REAL_T cf2(DIMV(m2));
       integer ib,jb,kb
 ! testing
       
@@ -121,19 +121,20 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
       dhz = beta/h(3)**2
 
 !truncate arrays
-      cf0=0.D0
-      cf0(blo(1),:,:)=merge(f0(blo(1),:,:), 0.0D0, (m0(blo(1)-1,:,:).gt.0))
-      cf0(bhi(1)+1,:,:)=merge(f3(bhi(1),:,:), 0.0D0, (m3(bhi(1)+1,:,:).gt.0))
+!cf0=0.D0
+!cf0(blo(1),:,:)=merge(f0(blo(1),:,:), 0.0D0, (m0(blo(1)-1,:,:).gt.0))
+!cf0(bhi(1)+1,:,:)=merge(f3(bhi(1),:,:), 0.0D0, (m3(bhi(1)+1,:,:).gt.0))
 
-      cf1=0.D0
-      cf1(:,blo(2),:)=merge(f1(:,blo(2),:), 0.0D0, (m1(:,blo(2)-1,:).gt.0))
-      cf1(:,bhi(2)+1,:)=merge(f4(:,bhi(2),:), 0.0D0, (m4(:,bhi(2)+1,:).gt.0))
+!cf1=0.D0
+!cf1(:,blo(2),:)=merge(f1(:,blo(2),:), 0.0D0, (m1(:,blo(2)-1,:).gt.0))
+!cf1(:,bhi(2)+1,:)=merge(f4(:,bhi(2),:), 0.0D0, (m4(:,bhi(2)+1,:).gt.0))
 
-      cf2=0.D0
-      cf2(:,:,blo(3))=merge(f2(:,:,blo(3)), 0.0D0, (m2(:,:,blo(3)-1).gt.0))
-      cf2(:,:,bhi(3)+1)=merge(f5(:,:,bhi(3)), 0.0D0, (m5(:,:,bhi(3)+1).gt.0))
-      
-!$omp target data map(phi) map(to:rhs,cf0,cf1,cf2, a, bX,bY,bZ, blo,bhi,lo,hi) if(.TRUE.)
+!cf2=0.D0
+!cf2(:,:,blo(3))=merge(f2(:,:,blo(3)), 0.0D0, (m2(:,:,blo(3)-1).gt.0))
+!cf2(:,:,bhi(3)+1)=merge(f5(:,:,bhi(3)), 0.0D0, (m5(:,:,bhi(3)+1).gt.0))
+
+!$omp target update to(rhs,phi)
+!$omp target data map(tofrom:phi) map(to:rhs,cf0,cf1,cf2, a, bX,bY,bZ, blo,bhi,lo,hi) if(.TRUE.)
       do n = 1, nc
 !$omp target if(.TRUE.)
 c     k and j are included as private because they are not private by default due to compiler bug.
@@ -141,22 +142,22 @@ c     k and j are included as private because they are not private by default du
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                ioff = MOD(lo(1) + j + k + redblack,2)
-!$omp parallel do private(rho, gamma, g_m_d,res) 
+!$omp parallel do private(rho, gamma, g_m_d,res,cf0,cf1,cf2,cf3,cf4,cf5) 
 !$omp&          firstprivate(alpha,dhx,dhy,dhz,omega, ioff) default(shared)
                do i = lo(1) + ioff,hi(1),2
 
-!                  cf0 = merge(f0s(j,k), 0.0D0,
-!     $                 (i .eq. blo(1)) .and. (m0s(j,k).gt.0))
-!                  cf1 = merge(f1s(i,k), 0.D00,
-!     $                 (j .eq. blo(2)) .and. (m1s(i,k).gt.0))
-!                  cf2 = merge(f2s(i,j), 0.0D0,
-!     $                 (k .eq. blo(3)) .and. (m2s(i,j).gt.0))
-!                  cf3 = merge(f3s(j,k), 0.0D0,
-!     $                 (i .eq. bhi(1)) .and. (m3s(j,k).gt.0))
-!                  cf4 = merge(f4s(i,k), 0.0D0,
-!     $                 (j .eq. bhi(2)) .and. (m4s(i,k).gt.0))
-!                  cf5 = merge(f5s(i,j), 0.0D0,
-!     $                 (k .eq. bhi(3)) .and. (m5s(i,j).gt.0))
+                  cf0 = merge(f0(blo(1),j,k), 0.0D0,
+     $                 (i .eq. blo(1)) .and. (m0(blo(1)-1,j,k).gt.0))
+                  cf1 = merge(f1(i,blo(2),k), 0.D00,
+     $                 (j .eq. blo(2)) .and. (m1(i,blo(2)-1,k).gt.0))
+                  cf2 = merge(f2(i,j,blo(3)), 0.0D0,
+     $                 (k .eq. blo(3)) .and. (m2(i,j,blo(3)-1).gt.0))
+                  cf3 = merge(f3(bhi(1),j,k), 0.0D0,
+     $                 (i .eq. bhi(1)) .and. (m3(bhi(1)+1,j,k).gt.0))
+                  cf4 = merge(f4(i,bhi(2),k), 0.0D0,
+     $                 (j .eq. bhi(2)) .and. (m4(i,bhi(2)+1,k).gt.0))
+                  cf5 = merge(f5(i,j,bhi(3)), 0.0D0,
+     $                 (k .eq. bhi(3)) .and. (m5(i,j,bhi(3)+1).gt.0))
 
                   
                   gamma = alpha*a(i,j,k)
@@ -165,9 +166,9 @@ c     k and j are included as private because they are not private by default du
      $                 +   dhz*(bZ(i,j,k)+bZ(i,j,k+1))
 
                   g_m_d = gamma
-     $                 - (dhx*(bX(i,j,k)*cf0(i,j,k) + bX(i+1,j,k)*cf0(i+1,j,k))
-     $                 +  dhy*(bY(i,j,k)*cf1(i,j,k) + bY(i,j+1,k)*cf1(i,j+1,k))
-     $                 +  dhz*(bZ(i,j,k)*cf2(i,j,k) + bZ(i,j,k+1)*cf2(i,j,k+1)))
+     $                 - (dhx*(bX(i,j,k)*cf0 + bX(i+1,j,k)*cf3)
+     $                 +  dhy*(bY(i,j,k)*cf1 + bY(i,j+1,k)*cf4)
+     $                 +  dhz*(bZ(i,j,k)*cf2 + bZ(i,j,k+1)*cf5))
 
                   rho =  dhx*( bX(i  ,j,k)*phi(i-1,j,k,n)
      $                 +       bX(i+1,j,k)*phi(i+1,j,k,n) )
@@ -185,6 +186,7 @@ c     k and j are included as private because they are not private by default du
 !$omp end teams distribute
 !$omp end target 
       end do
+!$omp target update from(phi)
 !$omp end target data
       end
 
@@ -441,33 +443,30 @@ c
       dhz = beta/h(3)**2
 
       res = 0.0D0
+
       
 !$omp target data map(to: a,bX,bY,bZ, lo, hi) if(.TRUE.)
-!$omp target update to(a,bX,bY,bZ, lo, hi) if(.TRUE.)
+!$omp target update to(a,bX,bY,bZ) if(.TRUE.)
       do n = 1, nc
 !$omp target map(tofrom:res) if(.TRUE.)
-!$omp teams distribute parallel do collapse(3) firstprivate(alpha,dhx,dhy,dhz) private(k,j,i) reduction(+:res)
+!$omp teams distribute parallel do collapse(3) firstprivate(alpha,dhx,dhy,dhz) private(k,j,i) reduction(max:res)
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
                do i = lo(1), hi(1)
-!                  res = max(res, abs(alpha*a(i,j,k)
-!     &                 + dhx*(bX(i+1,j,k) + bX(i,j,k))
-!     &                 + dhy*(bY(i,j+1,k) + bY(i,j,k))
-!     $                 + dhz*(bZ(i,j,k+1) + bZ(i,j,k)))
-!     &                 + abs( -dhx*bX(i+1,j,k)) + abs( -dhx*bX(i,j,k))
-!     &                 + abs( -dhy*bY(i,j+1,k)) + abs( -dhy*bY(i,j,k))
-!     &                 + abs( -dhz*bZ(i,j,k+1)) + abs( -dhz*bZ(i,j,k)))
-                  res = max(res, abs(alpha*a(i,j,k)))
+                  res = max(res, abs(alpha*a(i,j,k)
+     &                 + dhx*(bX(i+1,j,k) + bX(i,j,k))
+     &                 + dhy*(bY(i,j+1,k) + bY(i,j,k))
+     $                 + dhz*(bZ(i,j,k+1) + bZ(i,j,k)))
+     &                 + abs( -dhx*bX(i+1,j,k)) + abs( -dhx*bX(i,j,k))
+     &                 + abs( -dhy*bY(i,j+1,k)) + abs( -dhy*bY(i,j,k))
+     &                 + abs( -dhz*bZ(i,j,k+1)) + abs( -dhz*bZ(i,j,k)))
                end do
             end do
          end do
 !$omp end teams distribute parallel do
 !$omp end target
       end do
-!$omp end target data   
-
-      write(*,*) "Res = ",res
-      
+!$omp end target data         
       end
 c-----------------------------------------------------------------------
 c

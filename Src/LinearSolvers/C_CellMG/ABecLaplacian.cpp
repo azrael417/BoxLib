@@ -3,6 +3,7 @@
 #include <ABecLaplacian.H>
 #include <ABec_F.H>
 #include <ParallelDescriptor.H>
+#include <omp.h>
 
 Real ABecLaplacian::a_def     = 0.0;
 Real ABecLaplacian::b_def     = 1.0;
@@ -46,29 +47,18 @@ ABecLaplacian::~ABecLaplacian ()
 
 Real
 ABecLaplacian::norm (int nm, int level, const bool local)
-{
-    //DEBUG
-    std::cout << "inside norm!" << std::endl;
-    //DEBUG
-    
+{    
     BL_PROFILE("ABecLaplacian::norm()");
 
     
     BL_ASSERT(nm == 0);
     const MultiFab& a   = aCoefficients(level);
 
-    //DEBUG
-    std::cout << "after alloc(?)!" << std::endl;
-    //DEBUG 
     
     D_TERM(const MultiFab& bX  = bCoefficients(0,level);,
            const MultiFab& bY  = bCoefficients(1,level);,
            const MultiFab& bZ  = bCoefficients(2,level););
-
-    //DEBUG
-    std::cout << "after other allocs(?)!" << std::endl;
-    //DEBUG 
-    
+ 
     //const int nc = a.nComp(); // FIXME: This LinOp only really support single-component
     const int nc = 1;
     Real res = 0.0;
@@ -90,10 +80,6 @@ ABecLaplacian::norm (int nm, int level, const bool local)
 		   const FArrayBox& byfab = bY[amfi];,
 		   const FArrayBox& bzfab = bZ[amfi];);
 
-	    //DEBUG
-	    std::cout << "before norma!" << std::endl;
-	    std::cout << "pointer " << afab.dataPtr() << std::endl;
-	    //DEBUG 
 	    
 #if (BL_SPACEDIM==2)
 	    FORT_NORMA(&tres,
@@ -113,17 +99,9 @@ ABecLaplacian::norm (int nm, int level, const bool local)
 		       tbx.loVect(), tbx.hiVect(), &nc,
 		       h[level]);
 #endif
-	    //DEBUG
-	    std::cout << "after norma: res= " << tres << std::endl;
-	    //DEBUG
-
 	    res = std::max(res, tres);
 	}
     }
-
-    //DEBUG
-    std::cout << "after norm!" << std::endl;
-    //DEBUG 
     
     if (!local)
         ParallelDescriptor::ReduceRealMax(res,color());

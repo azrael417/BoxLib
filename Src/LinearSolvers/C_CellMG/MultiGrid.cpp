@@ -349,14 +349,6 @@ MultiGrid::solve_ (MultiFab&      _sol,
                 << eps_rel
                 << " < 1e-16 is probably set too low" << '\n';
   }
-
-  //DEBUG
-  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
-    {
-      std::cout << "Inside solve!" << std::endl;
-    }
-  //DEBUG
-
   
   //
   // We initially define norm_cor based on the initial solution only so we can use it in the very first iteration
@@ -364,33 +356,12 @@ MultiGrid::solve_ (MultiFab&      _sol,
   //    according to the Anorm test and not the bnorm test).
   //
   Real       norm_cor    = norm_inf(*initialsolution,true);
-
-  //DEBUG
-  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
-    {
-      std::cout << "After infimum: " << norm_cor << std::endl;
-    }
-  //DEBUG 
   
   ParallelDescriptor::ReduceRealMax(norm_cor,color());
-
-  //DEBUG
-  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
-    {
-      std::cout << "After infimum reduce: " << norm_cor << std::endl;
-    }
-  //DEBUG 
   
   int        nit         = 1;
   const Real norm_Lp     = Lp.norm(0, level);
   Real       cg_time     = 0;
-
-  //DEBUG
-  if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
-    {
-      std::cout<< "After norm: " << norm_Lp << std::endl;
-    }
-  //DEBUG  
 
   
   if ( use_Anorm_for_convergence == 1 ) 
@@ -414,6 +385,14 @@ MultiGrid::solve_ (MultiFab&      _sol,
              && nit <= maxiter;
            ++nit)
      {
+
+       //DEBUG
+       if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
+	 {
+	   std::cout<< "before relax." << std::endl;
+	 }
+       //DEBUG  
+       
          relax(*cor[level], *rhs[level], level, eps_rel, eps_abs, bc_mode, cg_time);
 
          Real tmp[2] = { norm_inf(*cor[level],true), errorEstimate(level,bc_mode,true) };
@@ -629,12 +608,13 @@ MultiGrid::relax (MultiFab&      solL,
               std::cout << "    DN:Norm before smooth " << rnorm << '\n';;
            }
         }
+	
         for (int i = preSmooth() ; i > 0 ; i--)
         {
             Lp.smooth(solL, rhsL, level, bc_mode);
         }
+	
         Lp.residual(*res[level], rhsL, solL, level, bc_mode);
-
         if ( verbose > 2 )
         {
            Real rnorm = norm_inf(*res[level]);
