@@ -615,8 +615,12 @@ MultiGrid::relax (MultiFab&      solL,
               std::cout << "    DN:Norm after  smooth " << rnorm << '\n';
         }
 	
-
         prepareForLevel(level+1);
+
+	//DEBUG
+	std::cout << "relax, after smooth down, |res|: " << norm_inf(*res[level],true) << '\n';
+	//DEBUG
+	
         average(*rhs[level+1], *res[level]);
         cor[level+1]->setVal(0.0);
         for (int i = cntRelax(); i > 0 ; i--)

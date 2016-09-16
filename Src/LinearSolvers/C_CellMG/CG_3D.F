@@ -46,6 +46,7 @@ c-----------------------------------------------------------------------
       integer i,j,k,n
 
 !$omp target data map(tofrom:phi,rr) map(to: pp, ww, lo, hi) if(.TRUE.)
+!$omp target update to(phi,rr,pp,ww) if(.TRUE.)
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(a) 
       do n = 1, nc
@@ -60,8 +61,8 @@ c-----------------------------------------------------------------------
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data  
-
+!$omp end target data
+!$omp target update from(phi,rr) if(.TRUE.)
       end
 c-----------------------------------------------------------------------
 c      
@@ -94,6 +95,7 @@ c-----------------------------------------------------------------------
       integer i,j,k,n
 
 !$omp target data map(tofrom:pp) map(to: rr, lo, hi) if(.TRUE.)
+!$omp target update to(rr,pp) if(.TRUE.)
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(b)
       do n = 1, nc
@@ -108,7 +110,7 @@ c-----------------------------------------------------------------------
 !$omp end teams distribute parallel do
 !$omp end target
 !$omp end target data  
-      
+!$omp target update from(pp) if(.TRUE.)
       end
       
 c-----------------------------------------------------------------------
@@ -144,8 +146,9 @@ c-----------------------------------------------------------------------
 
       !be careful with numbers of RHS!!!!
 !$omp target data map(to: pp, ww, lo, hi) if(.TRUE.)
+!$omp target update to(pp,ww) if(.TRUE.)
 !$omp target map(tofrom: pw) if(.TRUE.)
-!$omp teams distribute parallel do collapse(4) private(k,j,i,n) reduction(+:pw)
+!$omp teams distribute parallel do collapse(4) private(n,k,j,i) reduction(+:pw)
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -157,8 +160,7 @@ c-----------------------------------------------------------------------
       end do
 !$omp end teams distribute parallel do
 !$omp end target
-!$omp end target data  
-      
+!$omp end target data
       end
 c-----------------------------------------------------------------------
       subroutine FORT_CGSXAY(
@@ -183,6 +185,7 @@ c-----------------------------------------------------------------------
       integer i, j, k, n
 
 !$omp target data map(from: ss) map(to: xx, yy, lo, hi) if(.TRUE.)
+!$omp target update to(xx,yy) if(.TRUE.)    
 !$omp target if(.TRUE.)
 !$omp teams distribute parallel do collapse(4) private(k,j,i,n) firstprivate(a)
       do n = 1, nc
@@ -197,5 +200,5 @@ c-----------------------------------------------------------------------
 !$omp end teams distribute parallel do
 !$omp end target
 !$omp end target data  
-
+!$omp target update from(ss) if(.TRUE.)
       end
