@@ -647,10 +647,10 @@ ABecLaplacian::Fapply (MultiFab&       y,
            const MultiFab& bY  = bCoefficients(1,level);,
            const MultiFab& bZ  = bCoefficients(2,level););
 
-    const bool tiling = true;
+    const bool tiling = false;
 
 #ifdef _OPENMP
-#pragma omp parallel
+    //#pragma omp parallel
 #endif
     for (MFIter ymfi(y,tiling); ymfi.isValid(); ++ymfi)
     {

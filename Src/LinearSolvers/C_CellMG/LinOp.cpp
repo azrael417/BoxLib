@@ -26,6 +26,15 @@ int LinOp::LinOp_grow;
 // have LinOp_grow many ghost allocated.
 //
 
+
+//DEBUG
+static Real norm_inf (const MultiFab& res, bool local = false){
+  return res.norm0(0, 0, local);
+}
+//DEBUG
+
+
+
 void
 LinOp::Initialize ()
 {
@@ -299,6 +308,7 @@ LinOp::applyBC (MultiFab&      inout,
     }
 }
 
+
 void
 LinOp::residual (MultiFab&       residL,
                  const MultiFab& rhsL,
@@ -309,9 +319,10 @@ LinOp::residual (MultiFab&       residL,
 {
     BL_PROFILE("LinOp::residual()");
 
+    //apply operator
     apply(residL, solnL, level, bc_mode, local);
 
-    const bool tiling = true;
+    const bool tiling = false;
 
 #ifdef _OPENMP
     //#pragma omp parallel

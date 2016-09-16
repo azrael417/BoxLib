@@ -385,13 +385,6 @@ MultiGrid::solve_ (MultiFab&      _sol,
              && nit <= maxiter;
            ++nit)
      {
-
-       //DEBUG
-       if ( ParallelDescriptor::IOProcessor(color()) && verbose > 0)
-	 {
-	   std::cout<< "before relax." << std::endl;
-	 }
-       //DEBUG  
        
          relax(*cor[level], *rhs[level], level, eps_rel, eps_abs, bc_mode, cg_time);
 
@@ -613,7 +606,7 @@ MultiGrid::relax (MultiFab&      solL,
         {
             Lp.smooth(solL, rhsL, level, bc_mode);
         }
-	
+
         Lp.residual(*res[level], rhsL, solL, level, bc_mode);
         if ( verbose > 2 )
         {
@@ -621,6 +614,7 @@ MultiGrid::relax (MultiFab&      solL,
            if (ParallelDescriptor::IOProcessor(color()))
               std::cout << "    DN:Norm after  smooth " << rnorm << '\n';
         }
+	
 
         prepareForLevel(level+1);
         average(*rhs[level+1], *res[level]);

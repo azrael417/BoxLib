@@ -99,14 +99,6 @@ c-----------------------------------------------------------------------
       REAL_T    bX(DIMV(bX))
       REAL_T    bY(DIMV(bY))
       REAL_T    bZ(DIMV(bZ))
-
-!     testing
-      !REAL_T cf0(DIMV(m0));
-      !REAL_T cf1(DIMV(m1));
-      !REAL_T cf2(DIMV(m2));
-      integer ib,jb,kb
-! testing
-      
       integer  i, j, k, ioff, n
 
       REAL_T dhx, dhy, dhz, cf0, cf1, cf2, cf3, cf4, cf5
@@ -120,21 +112,8 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
       dhy = beta/h(2)**2
       dhz = beta/h(3)**2
 
-!truncate arrays
-!cf0=0.D0
-!cf0(blo(1),:,:)=merge(f0(blo(1),:,:), 0.0D0, (m0(blo(1)-1,:,:).gt.0))
-!cf0(bhi(1)+1,:,:)=merge(f3(bhi(1),:,:), 0.0D0, (m3(bhi(1)+1,:,:).gt.0))
-
-!cf1=0.D0
-!cf1(:,blo(2),:)=merge(f1(:,blo(2),:), 0.0D0, (m1(:,blo(2)-1,:).gt.0))
-!cf1(:,bhi(2)+1,:)=merge(f4(:,bhi(2),:), 0.0D0, (m4(:,bhi(2)+1,:).gt.0))
-
-!cf2=0.D0
-!cf2(:,:,blo(3))=merge(f2(:,:,blo(3)), 0.0D0, (m2(:,:,blo(3)-1).gt.0))
-!cf2(:,:,bhi(3)+1)=merge(f5(:,:,bhi(3)), 0.0D0, (m5(:,:,bhi(3)+1).gt.0))
-
-!$omp target update to(rhs,phi,bX,bY,bZ,a,m0,m1,m2,m3,m4,m5,f0,f1,f2,f3,f4,f5)
 !$omp target data map(tofrom:phi) map(to:rhs,m0,m1,m2,m3,m4,m5,f0,f1,f2,f3,f4,f5, a, bX,bY,bZ, blo,bhi,lo,hi) if(.TRUE.)
+!$omp target update to(rhs,phi,bX,bY,bZ,a,m0,m1,m2,m3,m4,m5,f0,f1,f2,f3,f4,f5, blo,bhi,lo,hi) if(.TRUE.)
       do n = 1, nc
 !$omp target if(.TRUE.)
 c     k and j are included as private because they are not private by default due to compiler bug.
@@ -187,7 +166,7 @@ c     k and j are included as private because they are not private by default du
 !$omp end target 
       end do
 !$omp end target data
-!$omp target update from(phi)      
+!$omp target update from(phi) if(.TRUE.)      
       end
 
 c-----------------------------------------------------------------------
@@ -380,10 +359,10 @@ c
       dhy = beta/h(2)**2
       dhz = beta/h(3)**2
 
-
 !$omp target data map(from: y) map(to: a, bX,bY,bZ, x, lo, hi) if(.TRUE.)
+!$omp target update to(a,x) if(.TRUE.)
 !$omp target if(.TRUE.)
-!$omp teams distribute parallel do collapse(4) private(k,j,i)
+!$omp teams distribute parallel do collapse(4) private(n,k,j,i)
       do n = 1, nc
          do k = lo(3), hi(3)
             do j = lo(2), hi(2)
@@ -405,7 +384,7 @@ c
 !$omp end teams distribute parallel do
 !$omp end target
 !$omp end target data
-
+!$omp target update from(y)
       end
 
 c-----------------------------------------------------------------------

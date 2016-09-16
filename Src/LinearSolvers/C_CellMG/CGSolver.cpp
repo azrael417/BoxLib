@@ -1412,6 +1412,12 @@ CGSolver::solve_bicgstab (MultiFab&       sol,
     MultiFab v    (ba, ncomp, 0, dm);
     MultiFab t    (ba, ncomp, 0, dm);
 
+    //DEBUG
+    //print the smoothened rhs, sol:
+    std::cout << "|rhs|: " << norm_inf(rhs, true) << std::endl;
+    std::cout << "|sol|: " << norm_inf(sol, true) << std::endl;
+    //DEBUG
+    
     Lp.residual(r, rhs, sol, lev, bc_mode);
 
     MultiFab::Copy(sorig,sol,0,0,1,0);
