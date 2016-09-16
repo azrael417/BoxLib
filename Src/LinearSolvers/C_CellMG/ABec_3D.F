@@ -133,8 +133,8 @@ c     This factor of 1.15 in 3D does over-relaxation but seems to consistently r
 !cf2(:,:,blo(3))=merge(f2(:,:,blo(3)), 0.0D0, (m2(:,:,blo(3)-1).gt.0))
 !cf2(:,:,bhi(3)+1)=merge(f5(:,:,bhi(3)), 0.0D0, (m5(:,:,bhi(3)+1).gt.0))
 
-!$omp target update to(rhs,phi)
-!$omp target data map(tofrom:phi) map(to:rhs,cf0,cf1,cf2, a, bX,bY,bZ, blo,bhi,lo,hi) if(.TRUE.)
+!$omp target update to(rhs,phi,bX,bY,bZ,a,m0,m1,m2,m3,m4,m5,f0,f1,f2,f3,f4,f5)
+!$omp target data map(tofrom:phi) map(to:rhs,m0,m1,m2,m3,m4,m5,f0,f1,f2,f3,f4,f5, a, bX,bY,bZ, blo,bhi,lo,hi) if(.TRUE.)
       do n = 1, nc
 !$omp target if(.TRUE.)
 c     k and j are included as private because they are not private by default due to compiler bug.
@@ -186,8 +186,8 @@ c     k and j are included as private because they are not private by default du
 !$omp end teams distribute
 !$omp end target 
       end do
-!$omp target update from(phi)
 !$omp end target data
+!$omp target update from(phi)      
       end
 
 c-----------------------------------------------------------------------
