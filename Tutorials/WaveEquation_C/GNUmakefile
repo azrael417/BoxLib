@@ -3,12 +3,12 @@
 BOXLIB_HOME ?= ../..
 
 DEBUG     = FALSE
-USE_MPI   = FALSE
-USE_OMP   = FALSE
+USE_MPI   = TRUE
+USE_OMP   = TRUE
 PROFILE   = FALSE
-COMP      = g++
-FCOMP     = gfortran
-DIM       = 2
+COMP      = Intel
+FCOMP     = Intel
+DIM       = 3
 PRECISION = DOUBLE
 EBASE     = main
 

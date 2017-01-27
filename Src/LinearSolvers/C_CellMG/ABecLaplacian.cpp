@@ -449,8 +449,9 @@ ABecLaplacian::Fsmooth (MultiFab&       solnL,
         const Mask& m5 = mm5[solnLmfi];
 #endif
 
-	const Box&       tbx     = solnLmfi.tilebox();
+		const Box&       tbx     = solnLmfi.tilebox();
         const Box&       vbx     = solnLmfi.validbox();
+		const Box&       fbx     = solnLmfi.fabbox();
         FArrayBox&       solnfab = solnL[solnLmfi];
         const FArrayBox& rhsfab  = rhsL[solnLmfi];
         const FArrayBox& afab    = a[solnLmfi];
@@ -488,6 +489,128 @@ ABecLaplacian::Fsmooth (MultiFab&       solnL,
 #endif
 
 #if (BL_SPACEDIM == 3)
+#ifdef USE_CPP_KERNELS
+	
+	//static inline int index3(const Box& field, const int& i, const int& j, const int& k, const int& BL_ghosts){
+	//	const int BL_jStride = field.tilebox.length(0);
+	//	const int BL_kStride = field.tilebox.length(0) * field.tilebox.length(1);
+	//	
+	//	return (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+	//}
+		
+	Real omega=1.15;
+	Tuple<Real,3> hl=h[level];
+	
+	const int* lo = tbx.loVect();
+	const int* hi = tbx.hiVect();
+	const int* blo = vbx.loVect();
+	const int* bhi = vbx.hiVect();
+
+	const int BL_jStride = tbx.length(0);
+	const int BL_kStride = tbx.length(0) * tbx.length(1);
+	const int BL_ghosts = solnL.nGrow();
+	const int offset = fbx.length(0)*fbx.length(1)*fbx.length(2);
+	
+	//pointers
+	Real* phip = solnfab.dataPtr();
+	const Real* rhsp = rhsfab.dataPtr();
+	const Real* ap = afab.dataPtr();
+	const Real* bxp = bxfab.dataPtr();
+	const Real* byp = byfab.dataPtr();
+	const Real* bzp = bzfab.dataPtr();
+	const int* m0p = m0.dataPtr();
+	const int* m1p = m1.dataPtr();
+	const int* m2p = m2.dataPtr();
+	const int* m3p = m3.dataPtr();
+	const int* m4p = m4.dataPtr();
+	const int* m5p = m5.dataPtr();
+	const Real* f0p = f0fab.dataPtr();
+	const Real* f1p = f1fab.dataPtr();
+	const Real* f2p = f2fab.dataPtr();
+	const Real* f3p = f3fab.dataPtr();
+	const Real* f4p = f4fab.dataPtr();
+	const Real* f5p = f5fab.dataPtr();
+	
+	//constants
+    double dhx = beta/(hl[0]*hl[0]);
+    double dhy = beta/(hl[1]*hl[1]);
+    double dhz = beta/(hl[2]*hl[2]);
+
+	// loop over sources
+	for(unsigned int n=0; n<nc; n++){
+	// do n = 1, nc
+		for(unsigned int k=lo[2]; k<=hi[2]; k++){
+		//do k = lo(3), hi(3)
+			for(unsigned int j=lo[1]; j<=hi[1]; j++){
+			//do j = lo(2), hi(2)
+				unsigned int ioff = (lo[0] + j + k + redBlackFlag)%2;
+				//ioff = MOD(lo(1) + j + k + redblack,2)
+				for(unsigned int i=ioff+lo[0]; i<=hi[0]; i+=2){
+				//do i = lo(1) + ioff,hi(1),2
+						
+					//coordinates
+					int   i_j_k = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int im1_j_k = (i-1+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int ip1_j_k = (i+1+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int i_jm1_k = (i+BL_ghosts) + (j-1+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int i_jp1_k = (i+BL_ghosts) + (j+1+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int i_j_km1 = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k-1+BL_ghosts)*BL_kStride;
+					int i_j_kp1 = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+1+BL_ghosts)*BL_kStride;
+					
+					//boundary
+					int blo_j_k = (blo[0]+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int blom1_j_k = (blo[0]-1+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					double cf0 = ( (i==blo[0] && m0p[blom1_j_k] > 0) ? f0p[blo_j_k] : 0.);
+					//merge(f0(blo(1),j,k), 0.0D0, (i .eq. blo(1)) .and. (m0(blo(1)-1,j,k).gt.0));
+					int i_blo_k = (i+BL_ghosts) + (blo[1]+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int i_blom1_k = (i+BL_ghosts) + (blo[1]-1+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					double cf1 = ( (j==blo[1] && m1p[i_blom1_k] > 0) ? f1p[i_blo_k] : 0.);
+					//merge(f1(i,blo(2),k), 0.0D0, (j .eq. blo(2)) .and. (m1(i,blo(2)-1,k).gt.0));
+					int i_j_blo = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (blo[2]+BL_ghosts)*BL_kStride;
+					int i_j_blom1 = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (blo[2]-1+BL_ghosts)*BL_kStride;
+					double cf2 =  ( (k==blo[2] && m2p[i_j_blom1] > 0) ? f2p[i_j_blo] : 0.);
+					//merge(f2(i,j,blo(3)), 0.0D0, (k .eq. blo(3)) .and. (m2(i,j,blo(3)-1).gt.0));
+					int bhi_j_k = (bhi[0]+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int bhip1_j_k = (bhi[0]+1+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					double cf3 = ( (i==bhi[0] && m3p[bhip1_j_k] > 0) ? f3p[bhi_j_k] : 0.);
+					//merge(f3(bhi(1),j,k), 0.0D0, (i .eq. bhi(1)) .and. (m3(bhi(1)+1,j,k).gt.0));
+					int i_bhi_k = (i+BL_ghosts) + (bhi[1]+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					int i_bhip1_k = (i+BL_ghosts) + (bhi[1]+1+BL_ghosts)*BL_jStride + (k+BL_ghosts)*BL_kStride;
+					double cf4 = ( (j==bhi[1] && m4p[i_bhip1_k] > 0) ? f4p[i_bhi_k] : 0.);
+					//merge(f4(i,bhi(2),k), 0.0D0, (j .eq. bhi(2)) .and. (m4(i,bhi(2)+1,k).gt.0));
+					int i_j_bhi = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (bhi[2]+BL_ghosts)*BL_kStride;
+					int i_j_bhip1 = (i+BL_ghosts) + (j+BL_ghosts)*BL_jStride + (bhi[2]+1+BL_ghosts)*BL_kStride;
+					double cf5 = ( (k==bhi[2] && m5p[i_j_bhip1] > 0) ? f5p[i_j_bhi] : 0.);
+					//merge(f5(i,j,bhi(3)), 0.0D0, (k .eq. bhi(3)) .and. (m5(i,j,bhi(3)+1).gt.0));
+					
+					//compute gamma:
+					Real gamma = alpha*ap[i_j_k];
+					gamma += dhx*(bxp[i_j_k]+bxp[ip1_j_k]);
+					gamma += dhy*(byp[i_j_k]+byp[i_jp1_k]);
+					gamma += dhz*(bzp[i_j_k]+bzp[i_j_kp1]);
+					
+					//compute g_m_d:
+					Real g_m_d = gamma;
+					g_m_d -= dhx*(bxp[i_j_k]*cf0+bxp[ip1_j_k]*cf3);
+					g_m_d -= dhy*(byp[i_j_k]*cf1+byp[i_jp1_k]*cf4);
+					g_m_d -= dhz*(bzp[i_j_k]*cf2+bzp[i_j_kp1]*cf5);
+					
+					//compute rho:
+					Real rho;
+					rho =  dhx * (bxp[i_j_k] * phip[im1_j_k+offset*n] + bxp[ip1_j_k]*phip[ip1_j_k+offset*n]);
+					rho += dhy * (byp[i_j_k] * phip[i_jm1_k+offset*n] + byp[i_jp1_k]*phip[i_jp1_k+offset*n]);
+					rho += dhz * (bzp[i_j_k] * phip[i_j_km1+offset*n] + bzp[i_j_kp1]*phip[i_j_kp1+offset*n]);
+					
+					//compute res:
+					Real res = rhsp[i_j_k+offset*n] - (gamma*phip[i_j_k+offset*n] - rho);
+					
+					//update phi
+					phip[i_j_k+offset*n] +=  omega/g_m_d * res;
+				}
+			}
+		}
+	}
+#else
         FORT_GSRB(solnfab.dataPtr(), ARLIM(solnfab.loVect()),ARLIM(solnfab.hiVect()),
                   rhsfab.dataPtr(), ARLIM(rhsfab.loVect()), ARLIM(rhsfab.hiVect()),
                   &alpha, &beta,
@@ -509,6 +632,7 @@ ABecLaplacian::Fsmooth (MultiFab&       solnL,
                   m5.dataPtr(), ARLIM(m5.loVect()), ARLIM(m5.hiVect()),
                   tbx.loVect(), tbx.hiVect(), vbx.loVect(), vbx.hiVect(),
                   &nc, h[level], &redBlackFlag);
+#endif
 #endif
     }
 }

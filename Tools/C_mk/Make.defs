@@ -486,7 +486,8 @@ ifeq ($(COMP),Intel)
    endif
 
    ifeq ($(WHICHLINUX), CORI)
-     CXXOPTF += -g -O2 -ip -qopt-report=5 -qopt-report-phase=vec -fp-model source
+     #CXXOPTF += -g -O2 -qopenmp -xMIC-AVX512 -ip -qopt-report=5 -qopt-report-phase=vec -fp-model source
+	 CXXOPTF += -g -O2 -qopenmp -xCORE-AVX2 -ip -qopt-report=5 -qopt-report-phase=vec -fp-model source
    endif
 
    ifeq ($(WHICHLINUX), EDISON)
@@ -1100,5 +1101,7 @@ ifeq ($(USE_F90CACHE),TRUE)
 else
   F90CACHE =
 endif
+
+
 
 -include $(BOXLIB_HOME)/Tools/C_mk/Make.local
